@@ -1,4 +1,4 @@
-<zimlet name="tk_barrydegraaff_sa_alert" version="0.1" label="Display alerts when Spam Assassin detects phishing" description="Display alerts when Spam Assassin detects phishing" target="main view-window">
+<zimlet name="tk_barrydegraaff_sa_alert" version="0.2" label="Display alerts when Spam Assassin detects phishing" description="Display alerts when Spam Assassin detects phishing" target="main view-window">
 	<include>tk_barrydegraaff_sa_alert.js</include>
 	<handlerObject>tk_barrydegraaff_sa_alert_HandlerObject</handlerObject>
 </zimlet>

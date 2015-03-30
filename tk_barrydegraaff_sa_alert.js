@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
 */
 /**
- * This zimlet checks for X-Spam-Status message header and alerts the user when certain tags are found
- * right now: URI_PHISH only
+ * This zimlet checks for X-Spam-Status message header and alerts the user when certain tags are found.
  */
 function tk_barrydegraaff_sa_alert_HandlerObject() {
 }
@@ -51,11 +50,23 @@ function() {
 };
 
 SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {  
-   if(msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0)
+   try
    {
-      SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising mail detected', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
-      SA_AlertZimlet.prototype._dialog.setContent('ATTENTION: This is probably a phishing mail, do not click on any links in the mail.<br><br>Please mark the message as junk');
-      SA_AlertZimlet.prototype._dialog.popup();
-
+      if(
+         (msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0) ||
+         (msg.attrs['X-Spam-Status'].indexOf('HTTPS_HTTP_MISMATCH') > 0) ||
+         (msg.attrs['X-Spam-Status'].indexOf('URIBL_DBL_ABUSE_PHISH') > 0) ||
+         (msg.attrs['X-Spam-Status'].indexOf('RCVD_IN_BRBL_LASTEXT') > 0) ||
+         (msg.attrs['X-Spam-Status'].indexOf('RCVD_IN_BL_SPAMCOP_NET') > 0)
+      )
+      {
+         SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising mail detected', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
+         SA_AlertZimlet.prototype._dialog.setContent('ATTENTION: This is probably a phishing mail, do not click on any links in the mail.<br><br>Please mark the message as junk');
+         SA_AlertZimlet.prototype._dialog.popup();
+   
+      }
+   } catch (err)
+   {
+     // X-Spam-Status header not found  
    }
 }   
