@@ -52,13 +52,7 @@ function() {
 SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {  
    try
    {
-      if(
-         (msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0) ||
-         (msg.attrs['X-Spam-Status'].indexOf('HTTPS_HTTP_MISMATCH') > 0) ||
-         (msg.attrs['X-Spam-Status'].indexOf('URIBL_DBL_ABUSE_PHISH') > 0) ||
-         (msg.attrs['X-Spam-Status'].indexOf('RCVD_IN_BRBL_LASTEXT') > 0) ||
-         (msg.attrs['X-Spam-Status'].indexOf('RCVD_IN_BL_SPAMCOP_NET') > 0)
-      )
+      if(msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0)
       {
          SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising mail detected', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
          SA_AlertZimlet.prototype._dialog.setContent('ATTENTION: This is probably a phishing mail, do not click on any links in the mail.<br><br>Please mark the message as junk');
