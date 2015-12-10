@@ -2,7 +2,7 @@
 This file is part of the Spam Assassin Alert Zimlet.
 Copyright (C) 2015  Barry de Graaff
 
-Bugs and feedback: https://github.com/barrydegraaff/sa-alert-zimlet
+Bugs and feedback: https://github.com/Zimbra-Community/sa-alert-zimlet
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
