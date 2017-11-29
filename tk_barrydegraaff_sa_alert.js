@@ -1,6 +1,6 @@
 /*
 This file is part of the Spam Assassin Alert Zimlet.
-Copyright (C) 2015  Barry de Graaff
+Copyright (C) 2015-2017  Barry de Graaff
 
 Bugs and feedback: https://github.com/Zimbra-Community/sa-alert-zimlet
 
@@ -52,15 +52,113 @@ function() {
 SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {  
    try
    {
-      if(msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0)
-      {
-         SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising mail detected', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
-         SA_AlertZimlet.prototype._dialog.setContent('ATTENTION: This is probably a phishing mail, do not click on any links in the mail.<br><br>Please mark the message as junk');
-         SA_AlertZimlet.prototype._dialog.popup();
+      var zimletInstance = appCtxt._zimletMgr.getZimletByName('tk_barrydegraaff_sa_alert').handlerObject;   
+      var alertmail = zimletInstance._zimletContext.getConfig("alertmail");   
    
+      var alertedIds = zimletInstance.getUserProperty("alertedIds");
+      if(!alertedIds)
+      {
+         alertedIds = "";
+      }
+
+      if((msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0) || (msg.attrs['X-Spam-Status'].indexOf('FREEMAIL_FORGED_REPLYTO') > 0))
+      {
+         SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising alert', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
+         var alertmailTxt = "";
+         if((alertmail) && (alertedIds.indexOf(","+msg.id))<0)
+         {
+            alertmailTxt = "The message is automatically forwarded to: " + alertmail;
+         }
+         SA_AlertZimlet.prototype._dialog.setContent('<b>Based on the headers of this email, there is a chance this is a phishing mail.<br>Do not click on any links in the mail and do not respond and foward it.</b><br><br>Please mark the message as spam.<br>' + alertmailTxt);
+         SA_AlertZimlet.prototype._dialog.popup();
+         if((alertmail) && (alertedIds.indexOf(","+msg.id))<0)
+         {
+            SA_AlertZimlet.prototype.notifyAttach(msg.id);
+            alertedIds[msg.id] = msg.id;   
+            zimletInstance.setUserProperty("alertedIds", alertedIds +","+msg.id, true);
+         }
       }
    } catch (err)
    {
      // X-Spam-Status header not found  
    }
-}   
+};   
+
+/** Send this message to the configured helpdesk for analysis
+ * */
+SA_AlertZimlet.prototype.notifyAttach = function (id) { 
+   var zimletInstance = appCtxt._zimletMgr.getZimletByName('tk_barrydegraaff_sa_alert').handlerObject;
+   var alertmail = zimletInstance._zimletContext.getConfig("alertmail");
+   
+   if(alertmail)
+   {
+      var url = [];
+      var i = 0;
+      var proto = location.protocol;
+      var port = Number(location.port);
+      url[i++] = proto;
+      url[i++] = "//";
+      url[i++] = location.hostname;
+      if (port && ((proto == ZmSetting.PROTO_HTTP && port != ZmSetting.HTTP_DEFAULT_PORT) 
+      || (proto == ZmSetting.PROTO_HTTPS && port != ZmSetting.HTTPS_DEFAULT_PORT))) {
+      url[i++] = ":";
+      url[i++] = port;
+      }
+      url[i++] = "/home/";
+      url[i++]= AjxStringUtil.urlComponentEncode(appCtxt.getActiveAccount().name);
+      url[i++] = "/message.txt?fmt=txt"+"&id=";
+      url[i++] = id;
+      
+      var getUrl = url.join(""); 
+      
+      //Now make an ajax request and read the contents of this mail, including all attachments as text
+      //it should be base64 encoded
+      var xmlHttp = null;   
+      xmlHttp = new XMLHttpRequest();
+      xmlHttp.open( "GET", getUrl, false );
+      xmlHttp.send( null );
+   
+      //Check for duplicate filename   
+      var composeView = appCtxt.getCurrentView();
+      
+      req = new XMLHttpRequest();
+      req.open("POST", "/service/upload?fmt=extended,raw", true);        
+      req.setRequestHeader("Cache-Control", "no-cache");
+      req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+      req.setRequestHeader("Content-Type",  "text/plain" + ";");
+      req.setRequestHeader("X-Zimbra-Csrf-Token", window.csrfToken);
+      req.setRequestHeader("Content-Disposition", 'attachment; filename="message.eml"');
+   
+      var myWindow = this;
+      myWindow.idsToAttach = [];
+      req.onload = function(e)
+      {
+         var resp = eval("["+req.responseText+"]");
+         var respObj = resp[2];
+         var attId = "";
+         for (var i = 0; i < respObj.length; i++) 
+         {
+            if(respObj[i].aid != "undefined") {
+               myWindow.idsToAttach.push(respObj[i].aid);            
+               var attachment_list = myWindow.idsToAttach.join(",");
+   
+   
+              var cc = AjxDispatcher.run("GetComposeController");
+              var htmlCompose = appCtxt.get(ZmSetting.COMPOSE_AS_FORMAT) === ZmSetting.COMPOSE_HTML;
+              var extraBodyText = [];      
+   
+              cc._setView({
+                 action: ZmOperation.NEW_MESSAGE,
+                 inNewWindow: false,
+                 msg: new ZmMailMsg(),
+                 toOverride: alertmail,
+                 subjOverride: "Automatically submitted email for spoof check (tk_barrydegraaff_sa_alert)",
+                 extraBodyText: "Automatically submitted email for spoof check (tk_barrydegraaff_sa_alert)"
+              });
+              cc.sendMsg([].concat(attachment_list).join(","));
+            }
+         }
+      }      
+      req.send(xmlHttp.responseText);
+   }
+};

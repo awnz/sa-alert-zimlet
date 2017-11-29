@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zimletConfig name="tk_barrydegraaff_sa_alert" version="1.0">
+    <global>
+        <property name="alertmail"></property>
+    </global>
+</zimletConfig>
