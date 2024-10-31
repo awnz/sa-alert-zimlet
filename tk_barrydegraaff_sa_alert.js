@@ -46,7 +46,7 @@ function() {
  */
 SA_AlertZimlet.prototype._applyRequestHeaders =
 function() {	
-	ZmMailMsg.requestHeaders["X-Spam-Status"] = "X-Spam-Status";
+	ZmMailMsg.requestHeaders["X-SPAM-LEVEL"] = "X-SPAM-LEVEL";
 };
 
 SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {  
@@ -61,7 +61,11 @@ SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {
          alertedIds = "";
       }
 
-      if((msg.attrs['X-Spam-Status'].indexOf('URI_PHISH') > 0) || (msg.attrs['X-Spam-Status'].indexOf('FREEMAIL_FORGED_REPLYTO') > 0))
+      if(
+      	  (msg.attrs['X-SPAM-LEVEL'].indexOf('URI_PHISH') > 0) ||
+      	  (msg.attrs['X-SPAM-LEVEL'].indexOf('URI_WPADMIN') > 0) ||
+      	  (msg.attrs['X-SPAM-LEVEL'].indexOf('FREEMAIL_FORGED_REPLYTO') > 0)
+      )
       {
          SA_AlertZimlet.prototype._dialog = new ZmDialog( { title:'Phising alert', parent:this.getShell(), standardButtons:[DwtDialog.OK_BUTTON], disposeOnPopDown:true } );
          var alertmailTxt = "";
