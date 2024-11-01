@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
 */
 /**
- * This zimlet checks for X-Spam-Status message header and alerts the user when certain tags are found.
+ * This zimlet checks for X-SPAM-LEVEL message header from an upstream Proxmox Mail Gateway (PMG) server and alerts the user when certain tags are found.
  */
 function tk_barrydegraaff_sa_alert_HandlerObject() {
 }
@@ -84,7 +84,7 @@ SA_AlertZimlet.prototype.onMsgView = function (msg, oldMsg, view) {
       }
    } catch (err)
    {
-     // X-Spam-Status header not found  
+     // X-SPAM-LEVEL header not found  
    }
 };   
 
